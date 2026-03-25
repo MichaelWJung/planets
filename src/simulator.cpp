@@ -11,8 +11,8 @@ using namespace mp_units::si;
 constexpr auto G =
     6.674e-11 * (metre * metre * metre / (kilogram * second * second));
 
-auto computeNorm(auto r) {
-  return r.numerical_value_in(metre).magnitude() * metre;
+auto computeLength(auto r) {
+  return r.numerical_value_in(metre).magnitude() * isq::length[metre];
 }
 
 void updateVelocity(Body &b, time_t dt) {
@@ -32,13 +32,11 @@ void recomputeAccelerations(std::vector<Body> &bodies) {
     for (Body &b2 : bodies) {
       if (&b1 != &b2) {
         const auto r = b2.position - b1.position;
-        const auto norm = computeNorm(r);
+        const auto norm = computeLength(r);
         const auto cubeNorm = norm * norm * norm;
         const auto force = -G * b1.mass * b2.mass / cubeNorm * r;
-        b1.acceleration = quantity_cast<isq::acceleration>(
-            b1.acceleration + 1.0 / b1.mass * force);
-        b2.acceleration = quantity_cast<isq::acceleration>(
-            b2.acceleration - 1.0 / b2.mass * force);
+        b1.acceleration = b1.acceleration + quantity_cast<isq::acceleration>(1.0 / b1.mass * force);
+        b2.acceleration = b2.acceleration - quantity_cast<isq::acceleration>(1.0 / b2.mass * force);
       }
     }
   }
