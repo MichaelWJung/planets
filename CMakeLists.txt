@@ -5,6 +5,16 @@ set(CMAKE_CXX_STANDARD 23)
 set(CMAKE_CXX_STANDARD_REQUIRED ON)
 set(CMAKE_CXX_EXTENSIONS OFF)
 
+include(FetchContent)
+FetchContent_Declare(
+    mp-units
+    GIT_REPOSITORY https://github.com/mpusz/mp-units.git
+    GIT_TAG        v2.4.0
+    SOURCE_SUBDIR  src
+)
+set(MP_UNITS_API_CONTRACTS "NONE" CACHE STRING "" FORCE)
+FetchContent_MakeAvailable(mp-units)
+
 # Export compile commands for tooling (clangd, etc.)
 set(CMAKE_EXPORT_COMPILE_COMMANDS ON)
 
@@ -21,6 +31,7 @@ add_library(planets_lib
     src/simulator.cpp
 )
 target_include_directories(planets_lib PUBLIC include)
+target_link_libraries(planets_lib PUBLIC mp-units::mp-units)
 
 # Main executable
 add_executable(planets app/main.cpp)
