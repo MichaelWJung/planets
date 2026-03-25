@@ -4,22 +4,29 @@ namespace planets {
 
 namespace {
 
+using namespace mp_units;
+using namespace mp_units::si;
+
 // Gravitational constant in SI units: m^3 kg^-1 s^-2
 constexpr auto G =
-    6.674e-11 * (mp_units::si::metre * mp_units::si::metre * mp_units::si::metre /
-                 (mp_units::si::kilogram * mp_units::si::second * mp_units::si::second));
+    6.674e-11 * (metre * metre * metre / (kilogram * second * second));
+
+auto computeNorm(auto r) {
+  return r.numerical_value_in(metre).magnitude() * metre;
+}
 
 void updateVelocity(Body &b, time_t dt) {
-  b.velocity = b.velocity + b.acceleration * dt;
+  b.velocity = quantity_cast<isq::velocity>(b.velocity + b.acceleration * dt);
 }
 
 void updatePosition(Body &b, time_t dt) {
-  b.position = b.position + b.velocity * dt;
+  b.position =
+      quantity_cast<isq::position_vector>(b.position + b.velocity * dt);
 }
 
 void recomputeAccelerations(std::vector<Body> &bodies) {
   for (Body &b : bodies) {
-    b.acceleration = Vec3<acceleration_t>{acceleration_t::zero(), acceleration_t::zero(), acceleration_t::zero()};
+    b.acceleration = acceleration_t{};
   }
   for (Body &b1 : bodies) {
     for (Body &b2 : bodies) {
@@ -28,8 +35,10 @@ void recomputeAccelerations(std::vector<Body> &bodies) {
         const auto norm = computeNorm(r);
         const auto cubeNorm = norm * norm * norm;
         const auto force = -G * b1.mass * b2.mass / cubeNorm * r;
-        b1.acceleration = b1.acceleration + 1.0 / b1.mass * force;
-        b2.acceleration = b2.acceleration - 1.0 / b2.mass * force;
+        b1.acceleration = quantity_cast<isq::acceleration>(
+            b1.acceleration + 1.0 / b1.mass * force);
+        b2.acceleration = quantity_cast<isq::acceleration>(
+            b2.acceleration - 1.0 / b2.mass * force);
       }
     }
   }
