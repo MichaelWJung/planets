@@ -22,10 +22,9 @@ using acceleration_t = mp_units::quantity<
     mp_units::cartesian_vector<double>>;
 
 struct Body {
-  mass_t mass;
+  mass_t     mass;
   position_t position;
   velocity_t velocity;
-  acceleration_t acceleration;
 };
 
 class Simulator {
@@ -40,6 +39,7 @@ public:
 
 private:
   std::vector<Body> bodies_;
+  std::vector<acceleration_t> accelerations_;
   time_t dt_;
 };
 
