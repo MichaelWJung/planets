@@ -37,7 +37,7 @@ void recomputeAccelerations(const std::vector<Body> &bodies,
         const auto r = body_j.position - body_i.position;
         const auto norm = computeLength(r);
         const auto cubeNorm = norm * norm * norm;
-        const auto force = -G * body_i.mass * body_j.mass / cubeNorm * r;
+        const auto force = G * body_i.mass * body_j.mass / cubeNorm * r;
         accel_i = accel_i + quantity_cast<isq::acceleration>(1.0 / body_i.mass * force);
         accel_j = accel_j - quantity_cast<isq::acceleration>(1.0 / body_j.mass * force);
       }
