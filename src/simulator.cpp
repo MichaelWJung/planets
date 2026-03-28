@@ -7,14 +7,13 @@ namespace planets {
 namespace {
 
 using namespace mp_units;
-using namespace mp_units::si;
+using namespace mp_units::si::unit_symbols;
 
 // Gravitational constant in SI units: m^3 kg^-1 s^-2
-constexpr auto G =
-    6.674e-11 * (metre * metre * metre / (kilogram * second * second));
+constexpr auto G = 6.674e-11 * (m3 / (kg * s2));
 
-auto computeLength(auto r) {
-  return r.numerical_value_in(metre).magnitude() * isq::length[metre];
+auto computeLength(displacement_t r) {
+  return r.numerical_value_in(m).magnitude() * isq::length[m];
 }
 
 void updateVelocity(Body &b, const acceleration_t &accel, time_t dt) {
@@ -22,8 +21,7 @@ void updateVelocity(Body &b, const acceleration_t &accel, time_t dt) {
 }
 
 void updatePosition(Body &b, time_t dt) {
-  b.position =
-      quantity_cast<isq::position_vector>(b.position + b.velocity * dt);
+  b.position = b.position + b.velocity * dt;
 }
 
 void recomputeAccelerations(const std::vector<Body> &bodies,
@@ -34,12 +32,14 @@ void recomputeAccelerations(const std::vector<Body> &bodies,
   for (auto [body_i, accel_i] : std::views::zip(bodies, accelerations)) {
     for (auto [body_j, accel_j] : std::views::zip(bodies, accelerations)) {
       if (&body_i != &body_j) {
-        const auto r = body_j.position - body_i.position;
+        const displacement_t r = body_j.position - body_i.position;
         const auto norm = computeLength(r);
         const auto cubeNorm = norm * norm * norm;
-        const auto force = G * body_i.mass * body_j.mass / cubeNorm * r;
-        accel_i = accel_i + quantity_cast<isq::acceleration>(1.0 / body_i.mass * force);
-        accel_j = accel_j - quantity_cast<isq::acceleration>(1.0 / body_j.mass * force);
+        const auto force = -G * body_i.mass * body_j.mass / cubeNorm * r;
+        accel_i = accel_i -
+                  quantity_cast<isq::acceleration>(1.0 / body_i.mass * force);
+        accel_j = accel_j +
+                  quantity_cast<isq::acceleration>(1.0 / body_j.mass * force);
       }
     }
   }
