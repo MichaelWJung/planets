@@ -17,12 +17,10 @@ auto computeLength(displacement_t r) {
 }
 
 void updateVelocity(Body &b, const acceleration_t &accel, time_t dt) {
-  b.velocity = quantity_cast<isq::velocity>(b.velocity + accel * dt);
+  b.velocity += accel * dt;
 }
 
-void updatePosition(Body &b, time_t dt) {
-  b.position = b.position + b.velocity * dt;
-}
+void updatePosition(Body &b, time_t dt) { b.position += b.velocity * dt; }
 
 void recomputeAccelerations(const std::vector<Body> &bodies,
                             std::vector<acceleration_t> &accelerations) {

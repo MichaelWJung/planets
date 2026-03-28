@@ -7,7 +7,7 @@
 namespace planets {
 
 inline constexpr struct solar_system_center_of_mass final
-    : mp_units::absolute_point_origin<mp_units::isq::position_vector> {
+    : mp_units::absolute_point_origin<mp_units::isq::displacement> {
 } solar_system_center_of_mass;
 
 using mass_t =
@@ -15,7 +15,7 @@ using mass_t =
 using time_t =
     mp_units::quantity<mp_units::isq::time[mp_units::si::second], double>;
 using position_t = mp_units::quantity_point<
-    mp_units::isq::position_vector[mp_units::si::metre],
+    mp_units::isq::displacement[mp_units::si::metre],
     solar_system_center_of_mass, mp_units::cartesian_vector<double>>;
 using displacement_t =
     mp_units::quantity<mp_units::isq::displacement[mp_units::si::metre],
