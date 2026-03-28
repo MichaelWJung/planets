@@ -8,7 +8,7 @@ Astronomical N-body simulation using Newtonian gravity (C++23). Primary scenario
 
 ```bash
 # Configure (once)
-cd build && cmake -G Ninja ..
+cd build && cmake -G Ninja -DCMAKE_TOOLCHAIN_FILE=clang22-toolchain.cmake ..
 
 # Incremental build
 ninja -C build
