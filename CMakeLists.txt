@@ -10,7 +10,7 @@ include(FetchContent)
 FetchContent_Declare(
     mp-units
     GIT_REPOSITORY https://github.com/mpusz/mp-units.git
-    GIT_TAG        v2.5.0
+    GIT_TAG        93d5ff2226e3ba26047bf12cb44c4620b8121dfe
     SOURCE_SUBDIR  src
 )
 set(MP_UNITS_API_CONTRACTS "NONE" CACHE STRING "" FORCE)
