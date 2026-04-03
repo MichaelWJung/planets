@@ -9,11 +9,6 @@ namespace {
 using namespace mp_units;
 using namespace mp_units::si::unit_symbols;
 
-auto computeLength(QuantityOf<isq::displacement> auto d) {
-  const auto &r = d.numerical_value_ref_in(d.unit);
-  return quantity_cast<isq::length>(r.norm() * d.unit);
-}
-
 void updateVelocity(Body &b, const acceleration_t &accel, time_t dt) {
   b.velocity += accel * dt;
 }
@@ -28,9 +23,9 @@ void recomputeAccelerations(const std::vector<Body> &bodies,
   for (size_t i = 0; i < bodies.size(); ++i) {
     for (size_t j = i + 1; j < bodies.size(); ++j) {
       const auto r = bodies[j].position - bodies[i].position;
-      const auto norm = computeLength(r);
-      const auto cubeNorm = norm * norm * norm;
-      const auto force = -G * bodies[i].mass * bodies[j].mass / cubeNorm * r;
+      const auto dist = norm(r);
+      const auto cubeDist = dist * dist * dist;
+      const auto force = -G * bodies[i].mass * bodies[j].mass / cubeDist * r;
       accelerations[i] -= 1.0 / bodies[i].mass * force;
       accelerations[j] += 1.0 / bodies[j].mass * force;
     }

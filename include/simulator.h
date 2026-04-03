@@ -36,6 +36,12 @@ using acceleration_t = mp_units::quantity<
                                 mp_units::si::second],
     mp_units::cartesian_vector<double>>;
 
+// Returns the Euclidean length of a displacement vector as a length quantity.
+[[nodiscard]] inline auto norm(mp_units::QuantityOf<mp_units::isq::displacement> auto d) {
+  const auto& r = d.numerical_value_ref_in(d.unit);
+  return mp_units::quantity_cast<mp_units::isq::length>(r.norm() * d.unit);
+}
+
 struct Body {
   mass_t mass;
   position_t position;

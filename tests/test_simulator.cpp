@@ -2,12 +2,22 @@
 
 #include <gtest/gtest.h>
 #include <mp-units/math.h>
+#include <ranges>
 
 using namespace mp_units;
 using namespace mp_units::si::unit_symbols;
 
 namespace planets {
 namespace {
+
+[[nodiscard]] displacement_t make_displacement(QuantityOf<isq::length> auto x,
+                                               QuantityOf<isq::length> auto y,
+                                               QuantityOf<isq::length> auto z) {
+  using namespace mp_units::si::unit_symbols;
+  return cartesian_vector<double>{x.numerical_value_in(m), y.numerical_value_in(m),
+                                  z.numerical_value_in(m)} *
+         isq::displacement[m];
+}
 
 TEST(SimulatorTest, EmptySimulator) {
   Simulator sim{{}, 1 * s};
@@ -61,17 +71,13 @@ TEST(SimulatorTest, TwoBodiesAttractEachOther) {
 
   Body body0{
       .mass = mass,
-      .position = position_t{cartesian_vector<double>{-x.numerical_value_in(m),
-                                                      0.0, 0.0} *
-                                 isq::displacement[m],
+      .position = position_t{make_displacement(-x, 0 * m, 0 * m),
                              solar_system_center_of_mass},
       .velocity = velocity_t{},
   };
   Body body1{
       .mass = 2.0 * mass,
-      .position = position_t{cartesian_vector<double>{x.numerical_value_in(m),
-                                                      0.0, 0.0} *
-                                 isq::displacement[m],
+      .position = position_t{make_displacement(x, 0 * m, 0 * m),
                              solar_system_center_of_mass},
       .velocity = velocity_t{},
   };
@@ -100,27 +106,24 @@ TEST(SimulatorTest, TwoBodiesAttractEachOther) {
   {
     const auto disp0 = state2[0].position - body0.position;
     const auto disp1 = state2[1].position - body1.position;
-    constexpr double tol = 1e-5; // metres
-    for (int k = 0; k < 3; ++k)
+    constexpr double tol = 1e-5;
+    for (int k : std::views::iota(0, 3))
       EXPECT_NEAR(disp0.numerical_value_in(m)[k],
                   -2.0 * disp1.numerical_value_in(m)[k], tol);
   }
 
-  // TODO: check distance actually decreased
-  // Separation changed — it decreased because body 0 moved toward body 1.
-  EXPECT_NE(state2[1].position - state2[0].position,
-            body1.position - body0.position);
+  const auto initial_sep = norm(body1.position - body0.position);
+  const auto final_sep = norm(state2[1].position - state2[0].position);
+  EXPECT_LE(final_sep, initial_sep);
 }
 
 TEST(SimulatorTest, TwoBodiesCircularOrbit) {
   // Planet and moon in a mutual orbit about their common center of mass.
   // Planet: (-r, 0, 0) with velocity (0, -v, 0)
   // Moon:   (+r, 0, 0) with velocity (0, +v, 0)
-  // TODO: replace all dummy values with analytically-derived ones.
   constexpr auto mass_planet = 6.0e24 * isq::mass[kg];
   constexpr auto mass_moon = 7.0e22 * isq::mass[kg];
-  constexpr auto distance = 1.0e10 * isq::length[m]; // metres
-                                                     //
+  constexpr auto distance = 1.0e10 * isq::length[m];
   constexpr auto mass_total = mass_planet + mass_moon;
   const auto r_planet = mass_moon / mass_total * distance;
   const auto r_moon = mass_planet / mass_total * distance;
@@ -136,9 +139,7 @@ TEST(SimulatorTest, TwoBodiesCircularOrbit) {
 
   Body planet{
       .mass = mass_planet,
-      .position = position_t{cartesian_vector<double>{
-                                 -r_planet.numerical_value_in(m), 0.0, 0.0} *
-                                 isq::displacement[m],
+      .position = position_t{make_displacement(-r_planet, 0 * m, 0 * m),
                              solar_system_center_of_mass},
       .velocity = velocity_t{cartesian_vector<double>{
                                  0.0, -v_planet.numerical_value_in(m / s), 0.0},
@@ -146,9 +147,7 @@ TEST(SimulatorTest, TwoBodiesCircularOrbit) {
   };
   Body moon{
       .mass = mass_moon,
-      .position = position_t{cartesian_vector<double>{
-                                 r_moon.numerical_value_in(m), 0.0, 0.0} *
-                                 isq::displacement[m],
+      .position = position_t{make_displacement(r_moon, 0 * m, 0 * m),
                              solar_system_center_of_mass},
       .velocity = velocity_t{cartesian_vector<double>{
                                  0.0, v_moon.numerical_value_in(m / s), 0.0},
@@ -156,18 +155,16 @@ TEST(SimulatorTest, TwoBodiesCircularOrbit) {
   };
 
   // --- Distance conservation over 5000 steps ---
-  const double initial_dist =
-      (moon.position - planet.position).numerical_value_in(m).norm();
+  const auto initial_dist = norm(moon.position - planet.position);
 
   Simulator sim{{planet, moon}, dt};
-  constexpr double dist_tolerance_rel =
-      0.01; // 1% relative — TODO: tighten once real values set
+  // Leapfrog is symplectic: distance error stays bounded (no secular drift).
+  // With dt ≈ T/3600, induced eccentricity ≈ (dt/T)² ≈ 1e-7; 1e-4 gives ample margin.
+  constexpr double dist_tolerance_rel = 1e-4;
   for (int step = 0; step < 5000; ++step) {
     sim.step();
-    const auto &state = sim.getState();
-    const double dist =
-        (state[1].position - state[0].position).numerical_value_in(m).norm();
-    EXPECT_NEAR(dist, initial_dist, dist_tolerance_rel * initial_dist)
+    const auto dist = norm(sim.getState()[1].position - sim.getState()[0].position);
+    EXPECT_LE(mp_units::abs(dist - initial_dist), dist_tolerance_rel * initial_dist)
         << "separation changed at step " << step;
   }
 
