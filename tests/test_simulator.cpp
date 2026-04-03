@@ -13,10 +13,27 @@ namespace {
 [[nodiscard]] displacement_t make_displacement(QuantityOf<isq::length> auto x,
                                                QuantityOf<isq::length> auto y,
                                                QuantityOf<isq::length> auto z) {
-  using namespace mp_units::si::unit_symbols;
   return cartesian_vector<double>{x.numerical_value_in(m), y.numerical_value_in(m),
                                   z.numerical_value_in(m)} *
          isq::displacement[m];
+}
+
+[[nodiscard]] position_t make_position(QuantityOf<isq::length> auto x,
+                                       QuantityOf<isq::length> auto y,
+                                       QuantityOf<isq::length> auto z) {
+  return position_t{make_displacement(x, y, z), solar_system_center_of_mass};
+}
+
+[[nodiscard]] velocity_t make_velocity(auto vx, auto vy, auto vz)
+  requires requires {
+    vx.numerical_value_in(m / s);
+    vy.numerical_value_in(m / s);
+    vz.numerical_value_in(m / s);
+  }
+{
+  return cartesian_vector<double>{vx.numerical_value_in(m / s), vy.numerical_value_in(m / s),
+                                  vz.numerical_value_in(m / s)} *
+         isq::velocity[m / s];
 }
 
 TEST(SimulatorTest, EmptySimulator) {
@@ -71,14 +88,12 @@ TEST(SimulatorTest, TwoBodiesAttractEachOther) {
 
   Body body0{
       .mass = mass,
-      .position = position_t{make_displacement(-x, 0 * m, 0 * m),
-                             solar_system_center_of_mass},
+      .position = make_position(-x, 0 * m, 0 * m),
       .velocity = velocity_t{},
   };
   Body body1{
       .mass = 2.0 * mass,
-      .position = position_t{make_displacement(x, 0 * m, 0 * m),
-                             solar_system_center_of_mass},
+      .position = make_position(x, 0 * m, 0 * m),
       .velocity = velocity_t{},
   };
 
@@ -139,19 +154,13 @@ TEST(SimulatorTest, TwoBodiesCircularOrbit) {
 
   Body planet{
       .mass = mass_planet,
-      .position = position_t{make_displacement(-r_planet, 0 * m, 0 * m),
-                             solar_system_center_of_mass},
-      .velocity = velocity_t{cartesian_vector<double>{
-                                 0.0, -v_planet.numerical_value_in(m / s), 0.0},
-                             isq::velocity[m / s]},
+      .position = make_position(-r_planet, 0 * m, 0 * m),
+      .velocity = make_velocity(0 * (m / s), -v_planet, 0 * (m / s)),
   };
   Body moon{
       .mass = mass_moon,
-      .position = position_t{make_displacement(r_moon, 0 * m, 0 * m),
-                             solar_system_center_of_mass},
-      .velocity = velocity_t{cartesian_vector<double>{
-                                 0.0, v_moon.numerical_value_in(m / s), 0.0},
-                             isq::velocity[m / s]},
+      .position = make_position(r_moon, 0 * m, 0 * m),
+      .velocity = make_velocity(0 * (m / s), v_moon, 0 * (m / s)),
   };
 
   // --- Distance conservation over 5000 steps ---
