@@ -197,35 +197,36 @@ TEST(SimulatorTest, TwoBodiesCircularOrbit) {
 
     Simulator sim{{planet, moon}, dt};
 
-    // x-component flips sign at T/4: positive just before, negative just after.
+    const auto planet_pos_x = [&] {
+      return (sim.getState()[0].position - position_t{}).numerical_value_in(m)[0];
+    };
+    const auto moon_pos_x = [&] {
+      return (sim.getState()[1].position - position_t{}).numerical_value_in(m)[0];
+    };
+    const auto planet_pos_y = [&] {
+      return (sim.getState()[0].position - position_t{}).numerical_value_in(m)[1];
+    };
+    const auto moon_pos_y = [&] {
+      return (sim.getState()[1].position - position_t{}).numerical_value_in(m)[1];
+    };
+
+    // x-component flips sign at T/4.
     for (int step = 0; step < quarter_period_steps; ++step)
       sim.step();
-    {
-      const auto sep = sim.getState()[1].position - sim.getState()[0].position;
-      EXPECT_GT(sep.numerical_value_in(m)[0], 0.0)
-          << "x-component should still be positive just before T/4";
-    }
+    EXPECT_LT(planet_pos_x(), 0.0) << "planet x should be negative just before T/4";
+    EXPECT_GT(moon_pos_x(),   0.0) << "moon x should be positive just before T/4";
     sim.step();
-    {
-      const auto sep = sim.getState()[1].position - sim.getState()[0].position;
-      EXPECT_LT(sep.numerical_value_in(m)[0], 0.0)
-          << "x-component should be negative just after T/4";
-    }
+    EXPECT_GT(planet_pos_x(), 0.0) << "planet x should be positive just after T/4";
+    EXPECT_LT(moon_pos_x(),   0.0) << "moon x should be negative just after T/4";
 
-    // y-component flips sign at T/2: positive just before, negative just after.
+    // y-component flips sign at T/2.
     for (int step = quarter_period_steps + 1; step < half_period_steps; ++step)
       sim.step();
-    {
-      const auto sep = sim.getState()[1].position - sim.getState()[0].position;
-      EXPECT_GT(sep.numerical_value_in(m)[1], 0.0)
-          << "y-component should still be positive just before T/2";
-    }
+    EXPECT_LT(planet_pos_y(), 0.0) << "planet y should be negative just before T/2";
+    EXPECT_GT(moon_pos_y(),   0.0) << "moon y should be positive just before T/2";
     sim.step();
-    {
-      const auto sep = sim.getState()[1].position - sim.getState()[0].position;
-      EXPECT_LT(sep.numerical_value_in(m)[1], 0.0)
-          << "y-component should be negative just after T/2";
-    }
+    EXPECT_GT(planet_pos_y(), 0.0) << "planet y should be positive just after T/2";
+    EXPECT_LT(moon_pos_y(),   0.0) << "moon y should be negative just after T/2";
   }
 }
 
