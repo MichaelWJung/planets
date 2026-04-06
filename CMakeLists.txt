@@ -23,6 +23,16 @@ FetchContent_Declare(
 )
 FetchContent_MakeAvailable(googletest)
 
+FetchContent_Declare(
+    raylib
+    GIT_REPOSITORY https://github.com/raysan5/raylib.git
+    GIT_TAG        5.0
+    GIT_SHALLOW    TRUE
+)
+set(BUILD_EXAMPLES OFF CACHE BOOL "" FORCE)
+set(BUILD_GAMES    OFF CACHE BOOL "" FORCE)
+FetchContent_MakeAvailable(raylib)
+
 # Export compile commands for tooling (clangd, etc.)
 set(CMAKE_EXPORT_COMPILE_COMMANDS ON)
 
@@ -42,8 +52,9 @@ target_include_directories(planets_lib PUBLIC include)
 target_link_libraries(planets_lib PUBLIC mp-units::mp-units)
 
 # Main executable
-add_executable(planets app/main.cpp)
-target_link_libraries(planets PRIVATE planets_lib)
+add_executable(planets app/main.cpp app/visualization.cpp)
+target_include_directories(planets PRIVATE app)
+target_link_libraries(planets PRIVATE planets_lib raylib)
 
 # Tests
 enable_testing()
