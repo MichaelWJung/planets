@@ -1,6 +1,7 @@
 #pragma once
 
 #include "simulator.h"
+#include "trails.h"
 
 namespace planets {
 
@@ -12,7 +13,7 @@ public:
   ~Visualization();
 
   [[nodiscard]] bool shouldClose() const;
-  void render(const std::vector<Body> &bodies);
+  void render(const std::vector<Body> &bodies, const Trails &trails);
 
 private:
   int width_;
