@@ -19,7 +19,7 @@ inline std::vector<Body> solarSystemBodies() {
     return cartesian_vector<double>{vx, vy, vz} * isq::velocity[m / s];
   };
 
-  return {
+  std::vector<Body> bodies = {
       // Sun
       Body{.mass = 1.989e30 * kg, .position = pos(0, 0, 0), .velocity = vel(0, 0, 0)},
       // Mercury  r=0.387 AU  v_circ=47.87 km/s
@@ -39,6 +39,18 @@ inline std::vector<Body> solarSystemBodies() {
       // Neptune  r=30.07 AU  v_circ= 5.43 km/s
       Body{.mass = 1.024e26 * kg, .position = pos(4.515e12, 0, 0), .velocity = vel(0, 5430, 0)},
   };
+
+  // Transform into the center-of-mass frame so total momentum is zero.
+  auto total_mass = 0.0 * kg;
+  for (const auto &body : bodies) total_mass += body.mass;
+
+  auto v_cm = cartesian_vector<double>{0, 0, 0} * isq::velocity[m / s];
+  for (const auto &body : bodies)
+    v_cm += (body.mass / total_mass) * body.velocity;
+
+  for (auto &body : bodies) body.velocity -= v_cm;
+
+  return bodies;
 }
 
 } // namespace planets
