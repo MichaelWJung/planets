@@ -21,7 +21,8 @@ private:
   double meters_per_pixel_;
 
   // Maps body mass (kg) to a screen radius in pixels; minimum 1 px.
-  [[nodiscard]] static int bodyRadius(double mass_kg);
+  // log_min/log_max are the log10 mass bounds of the current body set.
+  [[nodiscard]] static int bodyRadius(double mass_kg, double log_min, double log_max);
 };
 
 } // namespace planets
