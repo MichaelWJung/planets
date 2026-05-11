@@ -52,7 +52,7 @@ target_include_directories(planets_lib PUBLIC include)
 target_link_libraries(planets_lib PUBLIC mp-units::mp-units)
 
 # Main executable
-add_executable(planets app/main.cpp app/visualization.cpp app/trails.cpp)
+add_executable(planets app/main.cpp app/visualization.cpp)
 target_include_directories(planets PRIVATE app)
 target_link_libraries(planets PRIVATE planets_lib raylib)
 

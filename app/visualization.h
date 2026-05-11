@@ -1,28 +1,33 @@
 #pragma once
 
 #include "simulator.h"
-#include "trails.h"
+#include <raylib.h>
 
 namespace planets {
 
-// Owns the raylib window and renders Body state each frame.
-// metersPerPixel maps simulation distance (m) to screen pixels.
+// Owns the raylib window and renders Body state each frame in 3D.
+// scale converts simulation metres to Raylib world units.
+// Left-drag to orbit, scroll to zoom.
 class Visualization {
 public:
-  Visualization(int width, int height, double meters_per_pixel);
+  Visualization(int width, int height, double scale);
   ~Visualization();
 
   [[nodiscard]] bool shouldClose() const;
-  void render(const std::vector<Body> &bodies, const Trails &trails);
+  void render(const std::vector<Body> &bodies);
 
 private:
-  int width_;
-  int height_;
-  double meters_per_pixel_;
+  int    width_;
+  int    height_;
+  double scale_;
 
-  // Maps body mass (kg) to a screen radius in pixels; minimum 1 px.
-  // log_min/log_max are the log10 mass bounds of the current body set.
-  [[nodiscard]] static int bodyRadius(double mass_kg, double log_min, double log_max);
+  Camera3D camera_{};
+  float    azimuth_   = 45.0f;
+  float    elevation_ = 20.0f;
+  float    distance_  = 20.0f;
+
+  // Maps mass to sphere radius in world units; auto-scales to the body set's mass range.
+  [[nodiscard]] static float bodyRadius(double mass_kg, double log_min, double log_max);
 };
 
 } // namespace planets
