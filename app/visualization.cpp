@@ -55,19 +55,41 @@ void Visualization::render(const std::vector<Body> &bodies) {
     log_mass_max = std::max(log_mass_max, log_m);
   }
 
-  BeginDrawing();
-  ClearBackground(BLACK);
-  BeginMode3D(camera_);
+  // First pass: compute world positions, radii, and camera distances.
+  struct BodyDrawData { Vector3 pos; float r; float dist; };
+  std::vector<BodyDrawData> draw_list;
+  draw_list.reserve(bodies.size());
 
-  for (const Body &body : bodies) {
+  float dist_min = std::numeric_limits<float>::max();
+  float dist_max = 0.0f;
+  for (const auto &body : bodies) {
     const auto &vec = body.position
         .quantity_ref_from(solar_system_center_of_mass)
         .numerical_value_ref_in(m);
     const Vector3 pos{static_cast<float>(vec[0] / scale_),
                       static_cast<float>(vec[1] / scale_),
                       static_cast<float>(vec[2] / scale_)};
-    const float r = bodyRadius(body.mass.numerical_value_in(kg), log_mass_min, log_mass_max);
-    DrawSphereEx(pos, r, 6, 6, WHITE);
+    const float r    = bodyRadius(body.mass.numerical_value_in(kg), log_mass_min, log_mass_max);
+    const float dx   = pos.x - camera_.position.x;
+    const float dy   = pos.y - camera_.position.y;
+    const float dz   = pos.z - camera_.position.z;
+    const float dist = std::sqrt(dx*dx + dy*dy + dz*dz);
+    dist_min = std::min(dist_min, dist);
+    dist_max = std::max(dist_max, dist);
+    draw_list.push_back({pos, r, dist});
+  }
+
+  // Second pass: draw with brightness dimmed by distance (near=white, far=~15% grey).
+  BeginDrawing();
+  ClearBackground(BLACK);
+  BeginMode3D(camera_);
+
+  for (const auto &[pos, r, dist] : draw_list) {
+    const float t = (dist_max > dist_min)
+        ? std::log(dist / dist_min) / std::log(dist_max / dist_min)
+        : 0.0f;
+    const auto b = static_cast<unsigned char>(255.0f * (1.0f - 0.85f * t));
+    DrawSphereEx(pos, r, 6, 6, {b, b, b, 255});
   }
 
   EndMode3D();
